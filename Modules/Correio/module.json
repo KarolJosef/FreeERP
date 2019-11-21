@@ -1,0 +1,14 @@
+{
+    "name": "Correio",
+    "alias": "correio",
+    "description": "",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Correio\\Providers\\CorreioServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

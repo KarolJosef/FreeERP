@@ -10,7 +10,7 @@ use App\Entities\{Relacao,Endereco, Email, Telefone, TipoTelefone, Cidade, Estad
 use Modules\Compra\Entities\{Fornecedor};
 use Modules\Compra\Http\Requests\CreateFornecedor;
 
-
+    
 
 class FornecedorController extends Controller
 {
@@ -19,14 +19,14 @@ class FornecedorController extends Controller
 
     public function  __construct(){
         $this->moduleInfo = [
-            'icon' => 'store',
-            'name' => 'COMPRA',
+                'icon' => 'store',
+                'name' => 'COMPRA',
         ];
         $this->menu = [
             ['icon' => 'shop', 'tool' => 'Itens', 'route' => '/compra/itemCompra/'],
             ['icon' => 'library_books', 'tool' => 'Pedidos', 'route' => '/compra/pedido/'],
             ['icon' => 'local_shipping', 'tool' => 'Fornecedores', 'route' => '/compra/fornecedor/'],
-           
+            ['icon' => 'location_searching', 'tool' => 'Localizar objeto', 'route'=>'/webservices/webServices'],
 		];
     }
 
