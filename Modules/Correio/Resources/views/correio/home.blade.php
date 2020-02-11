@@ -15,7 +15,12 @@
 			   	<th class="align-middle text-center">Objetos Rastreados</th>
           <th class="align-middle text-center">Descrição</th>
           <th class="align-middle text-center">Ultima Atualização</th>
-          <th class="align-middle text-center">Notificar por email</th>
+          <th class="align-middle text-center"><img 
+        src="GMail_icon-icons.com_76886.png"
+      /></th>
+          <th class="align-middle text-center"><img 
+        src="twitter.png"
+      /> </th>
           <th></th>
 
         </tr>              
@@ -29,15 +34,27 @@
           </td>
              
           <td style="text-align:center">{{$c->descricao}}</td>
-          <td style="text-align:center"> {{ \Carbon\Carbon::parse($c->updated_at)->format('d/m/Y H:i:s')}}</td>
+          <td style="text-align:center"> {{$c->ultimaAtualizacao}}</td>
           <td>
             <div style="text-align:center">               
                 
               <form id="check-form" class="group-form" action="store">                  
                   @if($c->isToNotify)
-                    <input class="notification" type="checkbox" name="isToNotify" value="1" checked >
+                    <input class="notification" type="checkbox" name="isToNotify" value="1" checked disabled="" >
                   @else
-                    <input class="notification" type="checkbox" name="isToNotify" value="1" >
+                    <input class="notification" type="checkbox" name="isToNotify" value="1" disabled="" >
+                  @endif    
+              </form>
+            </div>
+          </td>
+           <td>
+            <div style="text-align:center">               
+                
+              <form id="check-form" class="group-form" action="store">                  
+                  @if($c->isToNotifyTw)
+                    <input class="notification" type="checkbox" name="isToNotifyTw" value="1" checked disabled="" >
+                  @else
+                    <input class="notification" type="checkbox" name="isToNotifyTw" value="1" disabled="" >
                   @endif    
               </form>
             </div>
@@ -69,29 +86,35 @@
 
                         </div>
                         <div class="modal-body">
-                            <form  action="{{url('correio/correio')}}" method="POST"  >
+                            <form  action="{{url('correio/correio',$c->id)}}" method="PUT"   >
                                  {{ csrf_field() }}
                                 @if($data['model'])
                                   @method('PUT')
                                 @endif
                                 <div class="form-group">
-                                        <input type="hidden" name="objeto" value="{{$c->codigo}}" >
-                                </div>                                        
+                                        <input type="hidden" name="id" value="{{$c->id}}" >             </div>                                        
                                 <div class="form-group">
                                     <label for="message-text" class="control-label" >Descrição:</label>
                                     <textarea name="descricao" class="form-control">{{$c->descricao}}</textarea>
                                 </div>
+                                
                                 <div style="text-align:right;"class="checkbox">                             
-                                    <label>Notificar mudanças por email @if($c->isToNotify)
+                                    <label>Notificar mudanças por:<br>Email @if($c->isToNotify)</label>
                                    <input class="notification" type="checkbox" name="isToNotify" value="1" checked >
+
+                                    <label>Twitter
+                                      <input class="notification"name="isToNotifyTw" type="checkbox" value="1" checked>
+                                    </label>     
                                 @else
-                                    <input class="notification" type="checkbox" name="isToNotify" value="1" >                                
+                                    <input class="notification" type="checkbox" name="isToNotify" value="1" >
+
+                                     <input class="notification"name="isToNotifyTw" type="checkbox" value="1">                                
                                 @endif 
-                                    </label>               
+                                                   
                                 </div>    
                                                    
                                 <div class="modal-footer">
-                                    <button type="submit" id="store" class="btn btn-success">Salvar</button>
+                                    <button type="submit" id="update" class="btn btn-success">Salvar</button>
                                 </div>
 
 
@@ -110,10 +133,7 @@
 
 		</table>     
                      
-  <a class="btn btn-success" href="{{ url('correio/correio/create') }}">Buscar Novo Objeto</a>   
-  <a id="salvar" class="btn btn-success" href="{{ url('correio/correio/{$c->id}') }}">Salvar</a>     
-
-
+  <a class="btn btn-success" href="{{ url('correio/correio/create') }}">Rastrear Novo Objeto</a>   
 
 
   </div> 
@@ -124,26 +144,6 @@
 
 </div>
 
-@endsection
-
-@section('js')
-<script type="text/javascript">
-  $(document).ready(function(){
-    $('#salvar').hide();
-
-    $('.notification').on('change', (e) => {
-      $('#salvar').show();
-    })
-  });
-</script>
-
-<script type="text/javascript">
-  $(document).ready(function(){
-    $('.notification').on('click', (e) => {
-      $('#salvar').show();
-    })
-  });
-</script>
 @endsection
 
 

@@ -31,7 +31,7 @@ class RastreamentoEmail extends Mailable
     public function build()
     {
         return $this->from('karoljozef123@hotmail.com')
-                ->subject('Agora foi carai')
+                ->subject('Rastreamento de objeto atualizado')
                 ->view('email.rastreio');
     }
 }

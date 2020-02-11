@@ -13,8 +13,11 @@
 
 Route::prefix('correio')->group(function() {
     Route::get('/', 'CorreioController@index');
-    Route::get('rastrear','CorreioController@rastrear');
-    Route::get('verifica','CorreioController@verifica');
+   // Route::get('rastrear','CorreioController@rastrear');
+   Route::get('verifica','CorreioController@ultimaAtualizacao');
+   //Route::put('update/{$id}', 'CorreioController@update');
+   Route::get('atualiza','CorreioController@atualizar');
+   Route::get('twitter','CorreioController@toTwitter');
 
     // localhost:8000/correio/rastrear
 

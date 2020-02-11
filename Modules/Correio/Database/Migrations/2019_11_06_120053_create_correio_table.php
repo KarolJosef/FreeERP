@@ -19,6 +19,7 @@ class CreateCorreioTable extends Migration
             $table->string('descricao',55);
             $table->integer('linhas')->nullable();
             $table->integer('isToNotify')->nullable();
+            $table->string('ultimaAtualizacao',300);
             $table->timestamps();
 
         });

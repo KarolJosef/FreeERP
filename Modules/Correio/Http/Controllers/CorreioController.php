@@ -12,6 +12,9 @@ use Modules\Correio\Entities\{Correio};
 use PhpQuery\PhpQuery as phpQuery;
 use DOMDocument;
 use DOMXPath;
+use NotificationChannels\Twitter\TwitterDirectMessage;
+use Twitter;
+
 
 
 class CorreioController extends Controller
@@ -25,11 +28,8 @@ class CorreioController extends Controller
             'name' => 'CORREIO',
         ];
         $this->menu = [
-            ['icon' => 'shop', 'tool' => 'Itens', 'route' => '/compra/itemCompra/'],
-            ['icon' => 'library_books', 'tool' => 'Pedidos', 'route' => '/compra/pedido/'],
-            ['icon' => 'local_shipping', 'tool' => 'Fornecedores', 'route' => '/compra/fornecedor/'],
-            ['icon' => 'search', 'tool' => 'Busca', 'route' => '#'],
-            ['icon' => 'location_searching', 'tool' => 'Localizar objeto', 'route'=>'/correio'],
+           
+            ['icon' => 'location_searching', 'tool' => 'Rastrear objeto', 'route'=>'/correio'],
         ];
     }
     /**
@@ -50,34 +50,51 @@ class CorreioController extends Controller
            'icon' => 'store',
            'name' => 'Correio',
            "model" => null,
+           'correio'=> Correio::all(),
                 
         ]; 
             
         return view('correio::correio.home', compact('data','moduleInfo','menu','correio'));
     }
 
+
     /**
      * Show the form for creating a new resource.
      * @return Response
      */
     public function create(Request $request)
-    {
+    {   $linhas = 0;
         $moduleInfo = $this->moduleInfo;
         $menu = $this->menu;
+        $dadosCorreio = $this->dadosCorreio($request->input('codigo'));
+        $regex = "/([0-9]{2}[\.]?[0-9]{3}[\.]?[0-9]{3}[\/]?[0-9]{4}[-]?[0-9]{2})|([0-9]{3}[\.]?[0-9]{3}[\.]?[0-9]{3}[-]?[0-9]{2})/";
+        $link = "https://apps.correios.com.br/cas/login?service=http%3A%2F%2Fwww2%2Ecorreios%2Ecom%2Ebr%2Fsistemas%2Frastreamento%2Flogin%2Ecfm";      
+        $aux = true;
+        $aux1 = false;
+        $lastUpdate = $this->ultimaAtualizacao($request->input('codigo'));
+         
+                
+        if (preg_match($regex, $request->input('codigo'))) {
+                        $aux1 = true;
+                
+        }elseif ($dadosCorreio == null){   
+            $aux = false;
+        }
+         
         $data = [
             "url"       => url('correio/rastrear'),
-            "button"    => "Buscar",
+            "button"    => "Rastrear",
             "model"     => null,
             'title'     => "Buscar novo Objeto",
             'model'     => '',
-            'correio'   => Correio::all(),
-            'dadosCorreio' => $this->dadosCorreio($request->input('codigo')), 
-            'codigo' => $request->input('codigo')           
+            'correio'   => Correio::all(),           
+            'codigo' => $request->input('codigo')            
             
-        ];
-
-         return view('correio::correio.buscar_objeto', compact('data','moduleInfo','menu'));       
+        ];            
+        
+         return view('correio::correio.buscar_objeto', compact('data','moduleInfo','menu','aux','dadosCorreio','linhas','link','aux1','lastUpdate'));       
     }
+
 
 
         /*Essa função recebe o codigo do objeto a ser rastreado
@@ -119,6 +136,7 @@ class CorreioController extends Controller
           a response em um DOMDocument*/    
 
             $resposta = curl_exec( $ch );
+            //var_dump($resposta);
             $htmldoc = new DOMDocument();
             libxml_use_internal_errors(true);
             $htmldoc->loadHTML($resposta);
@@ -129,39 +147,47 @@ class CorreioController extends Controller
          as informações as sobre o ratreio pela sua classe e as insere em um
          array multdimensional a primeira dimensão recebe as linhas da tabela, o
          segundo foreach formata o conteudo das celulas das linhas e as insere
-         na segunda dimensão do array.*/    
+         na segunda dimensão do array.*/  
 
-            foreach($xpath->query('//table[@class="listEvent sro"]//tr') as $key_tr => $tr){
-                $dados[$key_tr] = [];        
-                $tds = $xpath->query("./td", $tr);
+            $aux = $xpath->query('//table[@class="listEvent sro"]//tr');
 
-                foreach($tds as $key_td => $td){
-                $dados[$key_tr][] = $this->formatText($td->textContent);
-              }
+
+            if ($aux) {           
+        
+                foreach($xpath->query('//table[@class="listEvent sro"]//tr') as $key_tr => $tr){
+                    $dados[$key_tr] = [];        
+                    $tds = $xpath->query("./td", $tr);
+
+                    foreach($tds as $key_td => $td){
+                        $dados[$key_tr][] = $this->formatText($td->textContent);
+                 }
             }
-                return $dados;
 
-        }
-         else {
-           return [];
+            //$info = $dados[0][0];
+            return $dados;   
+
+            
+          }
+          return null;
+                
+                            
+       
+        }else {
+           return false;
         }
 }
 
+public function ultimaAtualizacao($codigo) {
+    
+    $tabela = $this->dadosCorreio($codigo);    
+    if ($tabela == null) {
+        return false; 
+    }else{
+    $dados = $tabela[0];
+    return $dados;
+  }
 
-public function verificaAtualizacao(){
-    $correios = Correios::all();
-
-    foreach($correios as $correio){
-        $resultado = $this->dadosCorreio($correio->codigo);
-        if($correio->linhas < count($resultado)){
-            $news = count($resultado) - $correios->linhas;
-            Mail::send();
-        }
-    }
-
-    return count($resultado);
 }
-
 
 //Essa função recebe a tabela com as informções do ratreio 
 //em formato de string e a retorna formatada pronta para ser exibida    
@@ -176,40 +202,71 @@ function formatText($table){
      * @param Request $request
      * @return Response
      */
-    public function store(Request $request)
-    {
+public function store(Request $request)
+{
+        $dado = Correio::all();
+        $linha = $this->dadosCorreio(request('objeto'));
+        $linhas = count($linha);
         
        $data = [
 
-'descricao' => request('descricao'),
-'objeto' => request('objeto'),
-'isToNotify' => request('isToNotify')
+        'descricao' => request('descricao'),
+        'objeto' => request('objeto'),
+        'isToNotify' => request('isToNotify'),
+        'isToNotifyTw' => request('isToNotifyTw'),
+        'ultimaAtualizacao' => request('ultimaAtualizacao'),
+        'linhas'=> $linhas
+        
+       
+        
+        
+    ];
+        
 
-];
-try{
-Correio::create($data);
-return redirect('correio')->with('success', 'Objeto cadastrado com successo');
-        }catch(Exception $e){
-            DB::rollback();
-            return back()->with('error', 'Erro no servidor');
-        }
+    foreach ($dado as $aux) {           
+         
+        if ($aux->objeto == request('objeto')) {
+            return back()->with('error','Este objeto ja foi salvo anteriormente');
+       }
+    } 
+    try{
+        Correio::create($data);
+        return redirect('correio')->with('success', 'Objeto cadastrado com successo');
+    }catch(Exception $e){
+        DB::rollback();
+        return back()->with('error', 'Erro no servidor');
     }
+}
 
     /**
      * Show the specified resource.
      * @param int $id
      * @return Response
      */
-    public function show()
+    public function show(Request $request, Correio $correio)
     {   
       // $tabelas = ToBeNotified::dispatchNow();       
-       AtualizarRastreio::dispatch();
-       echo"rodou";
-
-            
+      // AtualizarRastreio::dispatchNow();
+       
+       $correio = Correio::find($request->input('id'));
+       $correio->isToNotify = $request->input('isToNotify');
+       $correio->descricao = $request->input('descricao');
+       $correio->save();
+  
+               
+        return back()->with('success',  'Objeto atualizado');
 
         
     }
+
+     public function atualizar()
+    {   
+      // $tabelas = ToBeNotified::dispatchNow();       
+       AtualizarRastreio::dispatchNow();   
+
+        
+    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -229,8 +286,24 @@ return redirect('correio')->with('success', 'Objeto cadastrado com successo');
      */
     public function update(Request $request, $id)
     {
-        //
+       $correio = Correio::find($request->input('id'));
+       $correio->isToNotify = $request->input('isToNotify');
+       $correio->descricao = $request->input('descricao');
+       $correio->save();
+  
+               
+        return back()->with('success',  'Objeto atualizado');
+
     }
+
+     public function toTwitter($id, $message)
+    {
+     return new TwitterDirectMessage($id, $message);
+    }
+
+
+
+   
 
     /**
      * Remove the specified resource from storage.

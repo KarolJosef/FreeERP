@@ -26,7 +26,7 @@ class PedidoController extends Controller
             ['icon' => 'library_books', 'tool' => 'Pedidos', 'route' => '/compra/pedido/'],
             ['icon' => 'local_shipping', 'tool' => 'Fornecedores', 'route' => '/compra/fornecedor/'],
             ['icon' => 'search', 'tool' => 'Busca', 'route' => '#'],
-            ['icon' => 'location_searching', 'tool' => 'Localizar objeto', 'route'=>'/webservices/webServices'],
+            ['icon' => 'location_searching', 'tool' => 'Rastrear objeto', 'route'=>'/correio/correio'],
 		];
     }
     
